@@ -1,0 +1,540 @@
+[submodule "accumulators"]
+	path = accumulators
+	url = https://github.com/bincrafters/conan-boost_accumulators.git
+	branch = testing/1.66.0
+[submodule "algorithm"]
+	path = algorithm
+	url = https://github.com/bincrafters/conan-boost_algorithm.git
+	branch = testing/1.66.0
+[submodule "align"]
+	path = align
+	url = https://github.com/bincrafters/conan-boost_align.git
+	branch = testing/1.66.0
+[submodule "any"]
+	path = any
+	url = https://github.com/bincrafters/conan-boost_any.git
+	branch = testing/1.66.0
+[submodule "array"]
+	path = array
+	url = https://github.com/bincrafters/conan-boost_array.git
+	branch = testing/1.66.0
+[submodule "asio"]
+	path = asio
+	url = https://github.com/bincrafters/conan-boost_asio.git
+	branch = testing/1.66.0
+[submodule "assert"]
+	path = assert
+	url = https://github.com/bincrafters/conan-boost_assert.git
+	branch = testing/1.66.0
+[submodule "assign"]
+	path = assign
+	url = https://github.com/bincrafters/conan-boost_assign.git
+	branch = testing/1.66.0
+[submodule "atomic"]
+	path = atomic
+	url = https://github.com/bincrafters/conan-boost_atomic.git
+	branch = testing/1.66.0
+[submodule "beast"]
+	path = beast
+	url = https://github.com/bincrafters/conan-boost_beast.git
+	branch = testing/1.66.0
+[submodule "bimap"]
+	path = bimap
+	url = https://github.com/bincrafters/conan-boost_bimap.git
+	branch = testing/1.66.0
+[submodule "bind"]
+	path = bind
+	url = https://github.com/bincrafters/conan-boost_bind.git
+	branch = testing/1.66.0
+[submodule "build"]
+	path = build
+	url = https://github.com/bincrafters/conan-boost_build.git
+	branch = testing/1.66.0
+[submodule "callable_traits"]
+	path = callable_traits
+	url = https://github.com/bincrafters/conan-boost_callable_traits.git
+	branch = testing/1.66.0
+[submodule "chrono"]
+	path = chrono
+	url = https://github.com/bincrafters/conan-boost_chrono.git
+	branch = testing/1.66.0
+[submodule "circular_buffer"]
+	path = circular_buffer
+	url = https://github.com/bincrafters/conan-boost_circular_buffer.git
+	branch = testing/1.66.0
+[submodule "compatibility"]
+	path = compatibility
+	url = https://github.com/bincrafters/conan-boost_compatibility.git
+	branch = testing/1.66.0
+[submodule "compute"]
+	path = compute
+	url = https://github.com/bincrafters/conan-boost_compute.git
+	branch = testing/1.66.0
+[submodule "concept_check"]
+	path = concept_check
+	url = https://github.com/bincrafters/conan-boost_concept_check.git
+	branch = testing/1.66.0
+[submodule "config"]
+	path = config
+	url = https://github.com/bincrafters/conan-boost_config.git
+	branch = testing/1.66.0
+[submodule "container"]
+	path = container
+	url = https://github.com/bincrafters/conan-boost_container.git
+	branch = testing/1.66.0
+[submodule "context"]
+	path = context
+	url = https://github.com/bincrafters/conan-boost_context.git
+	branch = testing/1.66.0
+[submodule "conversion"]
+	path = conversion
+	url = https://github.com/bincrafters/conan-boost_conversion.git
+	branch = testing/1.66.0
+[submodule "convert"]
+	path = convert
+	url = https://github.com/bincrafters/conan-boost_convert.git
+	branch = testing/1.66.0
+[submodule "core"]
+	path = core
+	url = https://github.com/bincrafters/conan-boost_core.git
+	branch = testing/1.66.0
+[submodule "coroutine"]
+	path = coroutine
+	url = https://github.com/bincrafters/conan-boost_coroutine.git
+	branch = testing/1.66.0
+[submodule "coroutine2"]
+	path = coroutine2
+	url = https://github.com/bincrafters/conan-boost_coroutine2.git
+	branch = testing/1.66.0
+[submodule "crc"]
+	path = crc
+	url = https://github.com/bincrafters/conan-boost_crc.git
+	branch = testing/1.66.0
+[submodule "date_time"]
+	path = date_time
+	url = https://github.com/bincrafters/conan-boost_date_time.git
+	branch = testing/1.66.0
+[submodule "detail"]
+	path = detail
+	url = https://github.com/bincrafters/conan-boost_detail.git
+	branch = testing/1.66.0
+[submodule "disjoint_sets"]
+	path = disjoint_sets
+	url = https://github.com/bincrafters/conan-boost_disjoint_sets.git
+	branch = testing/1.66.0
+[submodule "dll"]
+	path = dll
+	url = https://github.com/bincrafters/conan-boost_dll.git
+	branch = testing/1.66.0
+[submodule "dynamic_bitset"]
+	path = dynamic_bitset
+	url = https://github.com/bincrafters/conan-boost_dynamic_bitset.git
+	branch = testing/1.66.0
+[submodule "endian"]
+	path = endian
+	url = https://github.com/bincrafters/conan-boost_endian.git
+	branch = testing/1.66.0
+[submodule "exception"]
+	path = exception
+	url = https://github.com/bincrafters/conan-boost_exception.git
+	branch = testing/1.66.0
+[submodule "fiber"]
+	path = fiber
+	url = https://github.com/bincrafters/conan-boost_fiber.git
+	branch = testing/1.66.0
+[submodule "filesystem"]
+	path = filesystem
+	url = https://github.com/bincrafters/conan-boost_filesystem.git
+	branch = testing/1.66.0
+[submodule "flyweight"]
+	path = flyweight
+	url = https://github.com/bincrafters/conan-boost_flyweight.git
+	branch = testing/1.66.0
+[submodule "foreach"]
+	path = foreach
+	url = https://github.com/bincrafters/conan-boost_foreach.git
+	branch = testing/1.66.0
+[submodule "format"]
+	path = format
+	url = https://github.com/bincrafters/conan-boost_format.git
+	branch = testing/1.66.0
+[submodule "function"]
+	path = function
+	url = https://github.com/bincrafters/conan-boost_function.git
+	branch = testing/1.66.0
+[submodule "function_types"]
+	path = function_types
+	url = https://github.com/bincrafters/conan-boost_function_types.git
+	branch = testing/1.66.0
+[submodule "functional"]
+	path = functional
+	url = https://github.com/bincrafters/conan-boost_functional.git
+	branch = testing/1.66.0
+[submodule "fusion"]
+	path = fusion
+	url = https://github.com/bincrafters/conan-boost_fusion.git
+	branch = testing/1.66.0
+[submodule "generator"]
+	path = generator
+	url = https://github.com/bincrafters/conan-boost_generator.git
+	branch = testing/1.66.0
+[submodule "geometry"]
+	path = geometry
+	url = https://github.com/bincrafters/conan-boost_geometry.git
+	branch = testing/1.66.0
+[submodule "gil"]
+	path = gil
+	url = https://github.com/bincrafters/conan-boost_gil.git
+	branch = testing/1.66.0
+[submodule "graph"]
+	path = graph
+	url = https://github.com/bincrafters/conan-boost_graph.git
+	branch = testing/1.66.0
+[submodule "graph_parallel"]
+	path = graph_parallel
+	url = https://github.com/bincrafters/conan-boost_graph_parallel.git
+	branch = testing/1.66.0
+[submodule "hana"]
+	path = hana
+	url = https://github.com/bincrafters/conan-boost_hana.git
+	branch = testing/1.66.0
+[submodule "heap"]
+	path = heap
+	url = https://github.com/bincrafters/conan-boost_heap.git
+	branch = testing/1.66.0
+[submodule "icl"]
+	path = icl
+	url = https://github.com/bincrafters/conan-boost_icl.git
+	branch = testing/1.66.0
+[submodule "integer"]
+	path = integer
+	url = https://github.com/bincrafters/conan-boost_integer.git
+	branch = testing/1.66.0
+[submodule "interprocess"]
+	path = interprocess
+	url = https://github.com/bincrafters/conan-boost_interprocess.git
+	branch = testing/1.66.0
+[submodule "intrusive"]
+	path = intrusive
+	url = https://github.com/bincrafters/conan-boost_intrusive.git
+	branch = testing/1.66.0
+[submodule "io"]
+	path = io
+	url = https://github.com/bincrafters/conan-boost_io.git
+	branch = testing/1.66.0
+[submodule "iostreams"]
+	path = iostreams
+	url = https://github.com/bincrafters/conan-boost_iostreams.git
+	branch = testing/1.66.0
+[submodule "iterator"]
+	path = iterator
+	url = https://github.com/bincrafters/conan-boost_iterator.git
+	branch = testing/1.66.0
+[submodule "lambda"]
+	path = lambda
+	url = https://github.com/bincrafters/conan-boost_lambda.git
+	branch = testing/1.66.0
+[submodule "level11group"]
+	path = level11group
+	url = https://github.com/bincrafters/conan-boost_level11group.git
+	branch = testing/1.66.0
+[submodule "level14group"]
+	path = level14group
+	url = https://github.com/bincrafters/conan-boost_level14group.git
+	branch = testing/1.66.0
+[submodule "level5group"]
+	path = level5group
+	url = https://github.com/bincrafters/conan-boost_level5group.git
+	branch = testing/1.66.0
+[submodule "level8group"]
+	path = level8group
+	url = https://github.com/bincrafters/conan-boost_level8group.git
+	branch = testing/1.66.0
+[submodule "lexical_cast"]
+	path = lexical_cast
+	url = https://github.com/bincrafters/conan-boost_lexical_cast.git
+	branch = testing/1.66.0
+[submodule "local_function"]
+	path = local_function
+	url = https://github.com/bincrafters/conan-boost_local_function.git
+	branch = testing/1.66.0
+[submodule "locale"]
+	path = locale
+	url = https://github.com/bincrafters/conan-boost_locale.git
+	branch = testing/1.66.0
+[submodule "lockfree"]
+	path = lockfree
+	url = https://github.com/bincrafters/conan-boost_lockfree.git
+	branch = testing/1.66.0
+[submodule "log"]
+	path = log
+	url = https://github.com/bincrafters/conan-boost_log.git
+	branch = testing/1.66.0
+[submodule "logic"]
+	path = logic
+	url = https://github.com/bincrafters/conan-boost_logic.git
+	branch = testing/1.66.0
+[submodule "math"]
+	path = math
+	url = https://github.com/bincrafters/conan-boost_math.git
+	branch = testing/1.66.0
+[submodule "metaparse"]
+	path = metaparse
+	url = https://github.com/bincrafters/conan-boost_metaparse.git
+	branch = testing/1.66.0
+[submodule "move"]
+	path = move
+	url = https://github.com/bincrafters/conan-boost_move.git
+	branch = testing/1.66.0
+[submodule "mp11"]
+	path = mp11
+	url = https://github.com/bincrafters/conan-boost_mp11.git
+	branch = testing/1.66.0
+[submodule "mpi"]
+	path = mpi
+	url = https://github.com/bincrafters/conan-boost_mpi.git
+	branch = testing/1.66.0
+[submodule "mpl"]
+	path = mpl
+	url = https://github.com/bincrafters/conan-boost_mpl.git
+	branch = testing/1.66.0
+[submodule "msm"]
+	path = msm
+	url = https://github.com/bincrafters/conan-boost_msm.git
+	branch = testing/1.66.0
+[submodule "multi_array"]
+	path = multi_array
+	url = https://github.com/bincrafters/conan-boost_multi_array.git
+	branch = testing/1.66.0
+[submodule "multi_index"]
+	path = multi_index
+	url = https://github.com/bincrafters/conan-boost_multi_index.git
+	branch = testing/1.66.0
+[submodule "multiprecision"]
+	path = multiprecision
+	url = https://github.com/bincrafters/conan-boost_multiprecision.git
+	branch = testing/1.66.0
+[submodule "numeric_conversion"]
+	path = numeric_conversion
+	url = https://github.com/bincrafters/conan-boost_numeric_conversion.git
+	branch = testing/1.66.0
+[submodule "numeric_interval"]
+	path = numeric_interval
+	url = https://github.com/bincrafters/conan-boost_numeric_interval.git
+	branch = testing/1.66.0
+[submodule "numeric_odeint"]
+	path = numeric_odeint
+	url = https://github.com/bincrafters/conan-boost_numeric_odeint.git
+	branch = testing/1.66.0
+[submodule "numeric_ublas"]
+	path = numeric_ublas
+	url = https://github.com/bincrafters/conan-boost_numeric_ublas.git
+	branch = testing/1.66.0
+[submodule "optional"]
+	path = optional
+	url = https://github.com/bincrafters/conan-boost_optional.git
+	branch = testing/1.66.0
+[submodule "parameter"]
+	path = parameter
+	url = https://github.com/bincrafters/conan-boost_parameter.git
+	branch = testing/1.66.0
+[submodule "phoenix"]
+	path = phoenix
+	url = https://github.com/bincrafters/conan-boost_phoenix.git
+	branch = testing/1.66.0
+[submodule "poly_collection"]
+	path = poly_collection
+	url = https://github.com/bincrafters/conan-boost_poly_collection.git
+	branch = testing/1.66.0
+[submodule "polygon"]
+	path = polygon
+	url = https://github.com/bincrafters/conan-boost_polygon.git
+	branch = testing/1.66.0
+[submodule "pool"]
+	path = pool
+	url = https://github.com/bincrafters/conan-boost_pool.git
+	branch = testing/1.66.0
+[submodule "predef"]
+	path = predef
+	url = https://github.com/bincrafters/conan-boost_predef.git
+	branch = testing/1.66.0
+[submodule "preprocessor"]
+	path = preprocessor
+	url = https://github.com/bincrafters/conan-boost_preprocessor.git
+	branch = testing/1.66.0
+[submodule "process"]
+	path = process
+	url = https://github.com/bincrafters/conan-boost_process.git
+	branch = testing/1.66.0
+[submodule "program_options"]
+	path = program_options
+	url = https://github.com/bincrafters/conan-boost_program_options.git
+	branch = testing/1.66.0
+[submodule "property_map"]
+	path = property_map
+	url = https://github.com/bincrafters/conan-boost_property_map.git
+	branch = testing/1.66.0
+[submodule "property_tree"]
+	path = property_tree
+	url = https://github.com/bincrafters/conan-boost_property_tree.git
+	branch = testing/1.66.0
+[submodule "proto"]
+	path = proto
+	url = https://github.com/bincrafters/conan-boost_proto.git
+	branch = testing/1.66.0
+[submodule "ptr_container"]
+	path = ptr_container
+	url = https://github.com/bincrafters/conan-boost_ptr_container.git
+	branch = testing/1.66.0
+[submodule "python"]
+	path = python
+	url = https://github.com/bincrafters/conan-boost_python.git
+	branch = testing/1.66.0
+[submodule "qvm"]
+	path = qvm
+	url = https://github.com/bincrafters/conan-boost_qvm.git
+	branch = testing/1.66.0
+[submodule "random"]
+	path = random
+	url = https://github.com/bincrafters/conan-boost_random.git
+	branch = testing/1.66.0
+[submodule "range"]
+	path = range
+	url = https://github.com/bincrafters/conan-boost_range.git
+	branch = testing/1.66.0
+[submodule "ratio"]
+	path = ratio
+	url = https://github.com/bincrafters/conan-boost_ratio.git
+	branch = testing/1.66.0
+[submodule "rational"]
+	path = rational
+	url = https://github.com/bincrafters/conan-boost_rational.git
+	branch = testing/1.66.0
+[submodule "regex"]
+	path = regex
+	url = https://github.com/bincrafters/conan-boost_regex.git
+	branch = testing/1.66.0
+[submodule "scope_exit"]
+	path = scope_exit
+	url = https://github.com/bincrafters/conan-boost_scope_exit.git
+	branch = testing/1.66.0
+[submodule "serialization"]
+	path = serialization
+	url = https://github.com/bincrafters/conan-boost_serialization.git
+	branch = testing/1.66.0
+[submodule "signals"]
+	path = signals
+	url = https://github.com/bincrafters/conan-boost_signals.git
+	branch = testing/1.66.0
+[submodule "signals2"]
+	path = signals2
+	url = https://github.com/bincrafters/conan-boost_signals2.git
+	branch = testing/1.66.0
+[submodule "smart_ptr"]
+	path = smart_ptr
+	url = https://github.com/bincrafters/conan-boost_smart_ptr.git
+	branch = testing/1.66.0
+[submodule "sort"]
+	path = sort
+	url = https://github.com/bincrafters/conan-boost_sort.git
+	branch = testing/1.66.0
+[submodule "spirit"]
+	path = spirit
+	url = https://github.com/bincrafters/conan-boost_spirit.git
+	branch = testing/1.66.0
+[submodule "stacktrace"]
+	path = stacktrace
+	url = https://github.com/bincrafters/conan-boost_stacktrace.git
+	branch = testing/1.66.0
+[submodule "statechart"]
+	path = statechart
+	url = https://github.com/bincrafters/conan-boost_statechart.git
+	branch = testing/1.66.0
+[submodule "static_assert"]
+	path = static_assert
+	url = https://github.com/bincrafters/conan-boost_static_assert.git
+	branch = testing/1.66.0
+[submodule "system"]
+	path = system
+	url = https://github.com/bincrafters/conan-boost_system.git
+	branch = testing/1.66.0
+[submodule "test"]
+	path = test
+	url = https://github.com/bincrafters/conan-boost_test.git
+	branch = testing/1.66.0
+[submodule "thread"]
+	path = thread
+	url = https://github.com/bincrafters/conan-boost_thread.git
+	branch = testing/1.66.0
+[submodule "throw_exception"]
+	path = throw_exception
+	url = https://github.com/bincrafters/conan-boost_throw_exception.git
+	branch = testing/1.66.0
+[submodule "timer"]
+	path = timer
+	url = https://github.com/bincrafters/conan-boost_timer.git
+	branch = testing/1.66.0
+[submodule "tokenizer"]
+	path = tokenizer
+	url = https://github.com/bincrafters/conan-boost_tokenizer.git
+	branch = testing/1.66.0
+[submodule "tti"]
+	path = tti
+	url = https://github.com/bincrafters/conan-boost_tti.git
+	branch = testing/1.66.0
+[submodule "tuple"]
+	path = tuple
+	url = https://github.com/bincrafters/conan-boost_tuple.git
+	branch = testing/1.66.0
+[submodule "type_erasure"]
+	path = type_erasure
+	url = https://github.com/bincrafters/conan-boost_type_erasure.git
+	branch = testing/1.66.0
+[submodule "type_index"]
+	path = type_index
+	url = https://github.com/bincrafters/conan-boost_type_index.git
+	branch = testing/1.66.0
+[submodule "type_traits"]
+	path = type_traits
+	url = https://github.com/bincrafters/conan-boost_type_traits.git
+	branch = testing/1.66.0
+[submodule "typeof"]
+	path = typeof
+	url = https://github.com/bincrafters/conan-boost_typeof.git
+	branch = testing/1.66.0
+[submodule "units"]
+	path = units
+	url = https://github.com/bincrafters/conan-boost_units.git
+	branch = testing/1.66.0
+[submodule "unordered"]
+	path = unordered
+	url = https://github.com/bincrafters/conan-boost_unordered.git
+	branch = testing/1.66.0
+[submodule "utility"]
+	path = utility
+	url = https://github.com/bincrafters/conan-boost_utility.git
+	branch = testing/1.66.0
+[submodule "uuid"]
+	path = uuid
+	url = https://github.com/bincrafters/conan-boost_uuid.git
+	branch = testing/1.66.0
+[submodule "variant"]
+	path = variant
+	url = https://github.com/bincrafters/conan-boost_variant.git
+	branch = testing/1.66.0
+[submodule "vmd"]
+	path = vmd
+	url = https://github.com/bincrafters/conan-boost_vmd.git
+	branch = testing/1.66.0
+[submodule "wave"]
+	path = wave
+	url = https://github.com/bincrafters/conan-boost_wave.git
+	branch = testing/1.66.0
+[submodule "winapi"]
+	path = winapi
+	url = https://github.com/bincrafters/conan-boost_winapi.git
+	branch = testing/1.66.0
+[submodule "xpressive"]
+	path = xpressive
+	url = https://github.com/bincrafters/conan-boost_xpressive.git
+	branch = testing/1.66.0
