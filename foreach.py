@@ -1,3 +1,5 @@
+# Copyright Rene Rivera 2017-2018
+
 import os.path
 import glob
 from subprocess import check_call, call
@@ -6,6 +8,7 @@ import argparse
 from time import sleep
 import re
 from types import BooleanType
+from functools import reduce
 
 conan_scope = "bincrafters/testing"
 args = None
@@ -35,13 +38,13 @@ class Commands():
     @staticmethod
     def __cf_get__(name, cf, default=False):
         if type(default) == type(True):
-            re = '''{0} = (True|False)'''.format(name)
+            re = '''%s = (True|False|[{][^}]+[}])''' % (name)
             return eval(Commands.__re_search__(re, cf, default=str(default)))
         if type(default) == type({}):
-            re = '''{0} = [{]([^}]+)'''.format(name)
+            re = '''%s = ([{][^}]+[}])''' % (name)
             return eval(Commands.__re_search__(re, cf, default=str(default)))
         else:
-            re = '''{0} = ['"]([^'"]+)'''.format(name)
+            re = '''%s = ['"]([^'"]+)''' % (name)
             return Commands.__re_search__(re, cf, default=default)
 
     @staticmethod
@@ -52,7 +55,10 @@ class Commands():
                 cf = f.read()
             result['name'] = Commands.__cf_get__('name', cf, default="")
             result['version'] = Commands.__cf_get__('version', cf, default="")
+            result['version_flat'] = result['version'].replace('.', '_')
             result['is_header_only'] = Commands.__cf_get__('is_header_only', cf, default=True)
+            if type(result['is_header_only']) == type({}):
+                result['is_header_only'] = reduce(lambda x, y: x and y, result['is_header_only'].viewvalues())
             result['is_cycle_group'] = Commands.__cf_get__('is_cycle_group', cf, default=False)
             result['is_in_cycle_group'] = Commands.__cf_get__('is_in_cycle_group', cf, default=False)
         return result
@@ -102,11 +108,90 @@ class Commands():
     
     @staticmethod
     def generate(args):
-        pass
+        if os.path.isfile(os.path.join(os.getcwd(), 'conanfile.py')):
+            cf_info = Commands.__info__(args)
+            with open(os.path.join(os.getcwd(), 'conanfile.py')) as f:
+                cf_py = f.readlines()
+            vars = {}
+            result_py = []
+            parse_state = 'pre'
+            for l in cf_py:
+                if parse_state == 'pre':
+                    if l and '# BEGIN' in l:
+                        parse_state = 'template'
+                        l = None
+                    if args.generate_version:
+                        l = re.sub(r'1[.][0-9][0-9][.][0-9]', args.version, l)
+                    if l and 'url = ' in l:
+                        l = None
+                    if l:
+                        result_py.append(l.rstrip() + "\n")
+
+                if parse_state == 'template':
+                    if l and '# END' in l:
+                        parse_state = 'post'
+                        l = None
+                        result_py.append('''\
+    # BEGIN
+
+    url = "https://github.com/bincrafters/conan-{name}"
+    description = "Please visit http://www.boost.org/doc/libs/{version_flat}"
+    license = "BSL-1.0"
+    short_paths = True
+'''.format(**cf_info))
+                        if not cf_info['is_header_only']:
+                            result_py.append('''\
+    generators = "boost"
+    settings = "os", "arch", "compiler", "build_type"
+'''.format(**cf_info))
+                        result_py.append('''\
+    build_requires = "boost_generator/{version}@bincrafters/testing"
+
+    def package_id(self):
+        getattr(self, "package_id_additional", lambda:None)()
+
+    def source(self):
+        with tools.pythonpath(self):
+            import boost_package_tools  # pylint: disable=F0401
+            boost_package_tools.source(self)
+        getattr(self, "source_additional", lambda:None)()
+
+    def build(self):
+        with tools.pythonpath(self):
+            import boost_package_tools  # pylint: disable=F0401
+            boost_package_tools.build(self)
+        getattr(self, "build_additional", lambda:None)()
+
+    def package(self):
+        with tools.pythonpath(self):
+            import boost_package_tools  # pylint: disable=F0401
+            boost_package_tools.package(self)
+        getattr(self, "package_additional", lambda:None)()
+
+    def package_info(self):
+        with tools.pythonpath(self):
+            import boost_package_tools  # pylint: disable=F0401
+            boost_package_tools.package_info(self)
+        getattr(self, "package_info_additional", lambda:None)()
+
+    # END
+'''.format(**cf_info))
+
+                if parse_state == 'post':
+                    if l and args.generate_version:
+                        l = re.sub(r'1[.][0-9][0-9][.][0-9]', args.version, l)
+                    if l:
+                        result_py.append(l.rstrip() + "\n")
+
+            if args.debug:
+                print("".join(result_py))
+            else:
+                with open(os.path.join(package_dir, 'conanfile.py'), 'w') as f:
+                    conanfile_py = f.write("".join(result_py))
     
     @staticmethod
     def travis_config(args):
-        if os.path.exists(os.path.join(os.getcwd(),'.travis.yml')):
+        if os.path.exists(os.path.join(os.getcwd(), '.travis.yml')):
             Commands.__write_file__(os.path.join(os.path.join(os.getcwd(), '.travis.yml')), '''\
 linux: &linux
    os: linux
@@ -210,7 +295,7 @@ if __name__ == "__main__":
     parser.add_argument('++extra', action='append')
     parser.add_argument('options', nargs='*', default=[])
     # command: generate
-    parser.add_argument("++generate-mode", choices=['local', 'required'], default='local')
+    # parser.add_argument("++generate-mode", choices=['local', 'required'], default='local')
     parser.add_argument("++generate-version")
     # command git_publish
     parser.add_argument("++git-publish-comment")
@@ -224,7 +309,7 @@ if __name__ == "__main__":
         lambda d: os.path.dirname(d),
         package_dirs))
     package_dirs = filter(None, map(
-        lambda d: d if os.path.basename(d) not in ('generator', 'build') else "",
+        lambda d: d if os.path.basename(d) not in ('generator', 'build', 'package_tools') else "",
         package_dirs))
     if args.lib:
         package_dirs = filter(None, map(

@@ -19,17 +19,18 @@ if __name__ == "__main__":
         lambda d: os.path.dirname(d),
         package_dirs_to_export))
     package_dirs_to_export = filter(None, map(
-        lambda d: d if os.path.basename(d) not in ('generator') else "",
+        lambda d: d if os.path.basename(d) not in ('generator', 'package_tools') else "",
         package_dirs_to_export))
     package_dirs_to_export = list(package_dirs_to_export)
     package_dirs_to_export.insert(0, os.path.join(os.getcwd(), 'generator'))
+    package_dirs_to_export.insert(0, os.path.join(os.getcwd(), 'package_tools'))
     
     package_dirs_to_build = glob.glob(os.path.join(os.getcwd(), '*', 'conanfile.py'))
     package_dirs_to_build = filter(None, map(
         lambda d: os.path.dirname(d),
         package_dirs_to_build))
     package_dirs_to_build = filter(None, map(
-        lambda d: d if os.path.basename(d) not in ('generator') else "",
+        lambda d: d if os.path.basename(d) not in ('generator', 'package_tools') else "",
         package_dirs_to_build))
     if args.lib:
         package_dirs_to_build = filter(None, map(
@@ -38,8 +39,9 @@ if __name__ == "__main__":
     package_dirs_to_build = list(package_dirs_to_build)
     if not args.clean_each:
         package_dirs_to_build.insert(0, os.path.join(os.getcwd(), 'generator'))
+        package_dirs_to_build.insert(0, os.path.join(os.getcwd(), 'package_tools'))
     
-    call(['conan', 'remove', '--force', 'Boost.*'])
+    call(['conan', 'remove', '--force', 'boost_*'])
     call(['conan', 'remote', 'add', 'bincrafters', 'https://api.bintray.com/conan/bincrafters/public-conan'])
     if not args.clean_each:
         for package_dir in package_dirs_to_export:
@@ -55,7 +57,7 @@ if __name__ == "__main__":
             print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " + package_dir)
             try:
                 if args.clean_each:
-                    call(['conan', 'remove', '--force', 'Boost.*'])
+                    call(['conan', 'remove', '--force', 'boost_*'])
                     for export_dir in package_dirs_to_export:
                         if export_dir:
                             print("---->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " + export_dir)
