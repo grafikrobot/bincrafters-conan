@@ -538,3 +538,6 @@
 	path = xpressive
 	url = https://github.com/bincrafters/conan-boost_xpressive.git
 	branch = testing/1.66.0
+[submodule "package_tools"]
+	path = package_tools
+	url = https://github.com/bincrafters/conan-boost-package-tools.git
