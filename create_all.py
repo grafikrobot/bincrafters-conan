@@ -48,7 +48,7 @@ if __name__ == "__main__":
             if package_dir:
                 print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " + package_dir)
                 os.chdir(package_dir)
-                command = ['conan', 'export',
+                command = ['conan', 'export', '.',
                     conan_scope]
                 check_call(command)
     failures = []
@@ -62,9 +62,9 @@ if __name__ == "__main__":
                         if export_dir:
                             print("---->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " + export_dir)
                             os.chdir(export_dir)
-                            check_call(['conan', 'export', conan_scope])
+                            check_call(['conan', 'export', '.', conan_scope])
                 os.chdir(package_dir)
-                check_call(['conan', 'create',
+                check_call(['conan', 'create', '.',
                     conan_scope,
                     '--build=missing'
                     ] + args.options)
