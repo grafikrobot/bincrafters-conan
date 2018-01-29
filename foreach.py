@@ -295,6 +295,10 @@ python build.py
     @staticmethod
     def git_merge(args):
         Commands.__call__(['git', 'merge', args.git_merge_commit], args)
+    
+    @staticmethod
+    def git_diff(args):
+        Commands.__call__(['git', 'diff', 'HEAD', args.git_diff_commit, '--'], args)
 
 
 if __name__ == "__main__":
@@ -317,6 +321,8 @@ if __name__ == "__main__":
     parser.add_argument("++git-checkout-branch")
     # command git_merge
     parser.add_argument("++git-merge-commit")
+    # command git_diff
+    parser.add_argument("++git-diff-commit")
     
     args = parser.parse_args()
     if not args.command:
