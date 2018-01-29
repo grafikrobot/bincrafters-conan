@@ -283,6 +283,18 @@ python build.py
     def git_publish(args):
         Commands.__call__(['git', 'commit', '--all', '-m', args.git_publish_comment], args)
         Commands.__check_call__(['git', 'push'], args)
+    
+    @staticmethod
+    def git_commit(args):
+        Commands.__call__(['git', 'commit', '--all', '-m', args.git_commit_comment], args)
+    
+    @staticmethod
+    def git_checkout(args):
+        Commands.__call__(['git', 'checkout', args.git_checkout_branch], args)
+    
+    @staticmethod
+    def git_merge(args):
+        Commands.__call__(['git', 'merge', args.git_merge_commit], args)
 
 
 if __name__ == "__main__":
@@ -299,6 +311,12 @@ if __name__ == "__main__":
     parser.add_argument("++generate-version")
     # command git_publish
     parser.add_argument("++git-publish-comment")
+    # command git_commit
+    parser.add_argument("++git-commit-comment")
+    # command git_checkout
+    parser.add_argument("++git-checkout-branch")
+    # command git_merge
+    parser.add_argument("++git-merge-commit")
     
     args = parser.parse_args()
     if not args.command:
