@@ -2,7 +2,7 @@
 
 import os.path
 import glob
-from subprocess import check_call, call
+from subprocess import check_call, call, check_output
 import pprint
 import argparse
 from time import sleep
@@ -16,55 +16,51 @@ args = None
 
 class Commands():
     
-    @staticmethod
-    def __check_call__(command, args):
+    def __check_call__(self, command, args):
         if args.debug:
             print('EXEC: "' + '" "'.join(command) + '"')
         else:
             check_call(command)
     
-    @staticmethod
-    def __call__(command, args):
+    def __call__(self, command, args):
         if args.debug:
             print('EXEC: "' + '" "'.join(command) + '"')
         else:
             call(command)
 
-    @staticmethod
-    def __re_search__(p, s, default=None):
+    def __re_search__(self, p, s, default=None):
         s = re.search(p, s)
         return s.group(1) if s else default
 
-    @staticmethod
-    def __cf_get__(name, cf, default=False):
+    def __cf_get__(self, name, cf, default=False):
         if type(default) == type(True):
             re = '''%s = (True|False|[{][^}]+[}])''' % (name)
-            return eval(Commands.__re_search__(re, cf, default=str(default)))
+            return eval(self.__re_search__(re, cf, default=str(default)))
         if type(default) == type({}):
             re = '''%s = ([{][^}]+[}])''' % (name)
-            return eval(Commands.__re_search__(re, cf, default=str(default)))
+            return eval(self.__re_search__(re, cf, default=str(default)))
         else:
             re = '''%s = ['"]([^'"]+)''' % (name)
-            return Commands.__re_search__(re, cf, default=default)
+            return self.__re_search__(re, cf, default=default)
 
-    @staticmethod
-    def __info__(args):
+    def __info__(self, args):
         result = {}
         if os.path.isfile(os.path.join(os.getcwd(), 'conanfile.py')):
             with open(os.path.join(os.getcwd(), 'conanfile.py')) as f:
                 cf = f.read()
-            result['name'] = Commands.__cf_get__('name', cf, default="")
-            result['version'] = Commands.__cf_get__('version', cf, default="")
+            result['name'] = self.__cf_get__('name', cf, default="")
+            result['key'] = result['name'].replace('boost_', '')
+            result['version'] = self.__cf_get__('version', cf, default="")
             result['version_flat'] = result['version'].replace('.', '_')
-            result['is_header_only'] = Commands.__cf_get__('is_header_only', cf, default=True)
+            result['is_header_only'] = self.__cf_get__('is_header_only', cf, default=True)
             if type(result['is_header_only']) == type({}):
                 result['is_header_only'] = reduce(lambda x, y: x and y, result['is_header_only'].viewvalues())
-            result['is_cycle_group'] = Commands.__cf_get__('is_cycle_group', cf, default=False)
-            result['is_in_cycle_group'] = Commands.__cf_get__('is_in_cycle_group', cf, default=False)
+            result['is_cycle_group'] = self.__cf_get__('is_cycle_group', cf, default=False)
+            result['level_group'] = self.__cf_get__('level_group', cf, default=None)
+            result['is_in_cycle_group'] = True if result['level_group'] else False
         return result
     
-    @staticmethod
-    def __write_file__(path, content, args, create_if_absent=False):
+    def __write_file__(self, path, content, args, create_if_absent=False):
         if os.path.exists(path) or create_if_absent:
             if args.debug:
                 print("FILE: " + os.path.basename(path).upper() + "\n" + content)
@@ -72,10 +68,9 @@ class Commands():
                 with open(os.path.join(path), 'w') as f:
                     f.write(content)
 
-    @staticmethod
-    def info(args):
+    def info(self, args):
         print('DIR: ' + os.getcwd())
-        cf = Commands.__info__(args)
+        cf = self.__info__(args)
         print('NAME: ' + cf['name'])
         print('VERSION: ' + cf['version'])
         print('IS_HEADER_ONLY: ' + str(cf['is_header_only']))
@@ -90,42 +85,181 @@ class Commands():
         if os.path.exists(os.path.join(os.getcwd(), ".git")):
             call(["git", "status", "-bsu", "--ignored"])
     
-    @staticmethod
-    def upload_source_only(args):
-        cf = Commands.__info__(args)
+    def upload_source_only(self, args):
+        cf = self.__info__(args)
         if cf['is_header_only']:
-            Commands.__check_call__([
+            self.__check_call__([
                 'conan', 'upload',
                 cf['name'] + '/' + cf['version'] + '@' + conan_scope,
                 '--all' , '-r', 'bincrafters'
                 ], args)
         elif cf['is_in_cycle_group']:
-            Commands.__check_call__([
+            self.__check_call__([
                 'conan', 'upload',
                 cf['name'] + '/' + cf['version'] + '@' + conan_scope,
                 '-r', 'bincrafters'
                 ], args)
     
-    @staticmethod
-    def generate(args):
+    def __read_deps__(self, deps):
+        deps_info = {}
+        with open(deps) as f:
+            deps_txt = f.readlines()
+        for l in deps_txt:
+            i = l.split('->')
+            lib = i[0].strip().replace('~', '_')
+            lib_deps = [x.replace('~', '_') for x in i[1].split()]
+            deps_info[lib] = lib_deps
+        return deps_info
+    
+    def generate_pre(self, args):
+        if args.generate_deps_header:
+            self.generate_deps_header = self.__read_deps__(args.generate_deps_header)
+        if args.generate_deps_source:
+            self.generate_deps_source = self.__read_deps__(args.generate_deps_source)
+        if args.generate_deps_levels:
+            deps_info = {}
+            with open(args.generate_deps_levels) as f:
+                deps_txt = f.readlines()
+            level_i = None
+            self.levelgroups = {}
+            for l in deps_txt:
+                l = l.strip()
+                if l and not level_i:
+                    if l.startswith('Level '):
+                        level_i = int(l[6:-1])
+                        self.levelgroups[level_i] = {
+                            'lib_short_names': set(),
+                            'requires': set() }
+                        l = None
+                if l == '':
+                    l = None
+                    level_i = None
+                if l and level_i:
+                    i = l.split('->')
+                    lib = i[0].strip().replace('~', '_')
+                    lib_deps = [x.replace('~', '_') for x in i[1].split()]
+                    for lib_dep in lib_deps:
+                        lib_level = int(self.__re_search__(r'[(]([0-9]+)[)]', lib_dep))
+                        if lib_level == level_i:
+                            self.levelgroups[level_i]['lib_short_names'].add(self.__re_search__(r'([^(]+)', lib_dep))
+            for (i, lg) in self.levelgroups.iteritems():
+                for l in lg['lib_short_names']:
+                    lg['requires'] |= set(self.generate_deps_header[l])
+                lg['requires'] -= lg['lib_short_names']
+            pprint.pprint(self.levelgroups)
+    
+    def generate(self, args):
         if os.path.isfile(os.path.join(os.getcwd(), 'conanfile.py')):
-            cf_info = Commands.__info__(args)
+            cf_info = self.__info__(args)
+            if args.generate_version:
+                cf_info['version'] = args.generate_version
+                cf_info['version_flat'] = args.generate_version.replace('.', '_')
             with open(os.path.join(os.getcwd(), 'conanfile.py')) as f:
                 cf_py = f.readlines()
             vars = {}
             result_py = []
             parse_state = 'pre'
+            requires_user = set()
+            requires_source = set()
+            requires_user_current = set()
+            requires_source_current = set()
+            if not cf_info['is_cycle_group'] and args.generate_deps_header:
+                requires_user.update(self.generate_deps_header[cf_info['key']])
+            if not cf_info['is_cycle_group'] and args.generate_deps_source:
+                requires_source.update(self.generate_deps_source[cf_info['key']])
+                requires_source.difference_update(requires_user)
+            # print('REQUIRES_USER:')
+            # pprint.pprint(requires_user)
+            # print('REQUIRES_SOURCE:')
+            # pprint.pprint(requires_source)
             for l in cf_py:
                 if parse_state == 'pre':
+                    if l and not cf_info['is_cycle_group'] and re.match(r'\s+requires\s+=', l):
+                        parse_state = 'requires'
+                        l = None
+                    if l and not cf_info['is_cycle_group'] and re.match(r'\s+source_only_deps\s+=', l):
+                        parse_state = 'source_only_deps'
                     if l and '# BEGIN' in l:
                         parse_state = 'template'
                         l = None
-                    if args.generate_version:
-                        l = re.sub(r'1[.][0-9][0-9][.][0-9]', args.version, l)
+                    if l and args.generate_version:
+                        l = re.sub(r'1[.][0-9][0-9][.][0-9]', args.generate_version, l)
                     if l and 'url = ' in l:
                         l = None
-                    if l:
+                    if parse_state == 'pre' and l:
                         result_py.append(l.rstrip() + "\n")
+
+                if parse_state == 'requires':
+                    if l and l.rstrip() == '':
+                        parse_state = 'pre'
+                        l = None
+                        requires_user_keep = set([x for x in requires_user_current if '@' in x])
+                        requires_user_current -= requires_user_keep
+
+                        if cf_info['level_group']:
+                            requires_user_level = set([
+                                self.__re_search__(r'boost_(.*)', cf_info['level_group']),
+                                'package_tools'])
+                            requires_user_todo = requires_user - requires_user_level
+                            requires_user = requires_user_level
+                        else:
+                            requires_user.add('package_tools')
+                            requires_user_todo = requires_user_current - requires_user
+                        # if cf_info['level_group']:
+                        #    requires_user -= requires_user_current
+
+                        requires_user_keep |= set(['boost_%s/%s@%s' % (x, cf_info['version'], conan_scope) for x in requires_user])
+                        # print("REQUIRES_USER_CURRENT:")
+                        # pprint.pprint(requires_user_current)
+                        if len(requires_user_todo) > 0:
+                            result_py.append('''\
+    # TODO: %s
+''' % (', '.join(sorted(requires_user_todo))))
+                        result_py.append('''\
+    requires = (
+''')
+                        result_py.append('''\
+        "%s"
+''' % ('''",
+        "'''.join(sorted(requires_user_keep))))
+                        result_py.append('''\
+    )
+
+''')
+                    if l:
+                        r = self.__re_search__(r'\s+["]([^"]+)', l)
+                        b = self.__re_search__(r'\s+["]boost_([^/]+)', l)
+                        if b:
+                            requires_user_current.add(b)
+                        elif r:
+                            requires_user_current.add(r)
+
+                if parse_state == 'source_only_deps':
+                    if l and l.rstrip() == '':
+                        parse_state = 'pre'
+                        l = None
+                        requires_source_todo = requires_source_current - requires_source
+                        # print("REQUIRES_SOURCE_TODO:")
+                        # pprint.pprint(requires_source_todo)
+                        if len(requires_source_todo) > 0:
+                            result_py.append('''\
+    # TODO: %s
+''' % (', '.join(sorted(requires_source_todo))))
+                        result_py.append('''\
+    source_only_deps = [
+''')
+                        result_py.append('''\
+        "%s"
+''' % ('''",
+        "'''.join(sorted(requires_source))))
+                        result_py.append('''\
+    ]
+
+''')
+                    if l:
+                        r = re.findall(r'["]([^"]+)["]', l)
+                        if r:
+                            requires_source_current.update(r)
 
                 if parse_state == 'template':
                     if l and '# END' in l:
@@ -179,7 +313,7 @@ class Commands():
 
                 if parse_state == 'post':
                     if l and args.generate_version:
-                        l = re.sub(r'1[.][0-9][0-9][.][0-9]', args.version, l)
+                        l = re.sub(r'1[.][0-9][0-9][.][0-9]', args.generate_version, l)
                     if l:
                         result_py.append(l.rstrip() + "\n")
 
@@ -189,10 +323,9 @@ class Commands():
                 with open(os.path.join(package_dir, 'conanfile.py'), 'w') as f:
                     conanfile_py = f.write("".join(result_py))
     
-    @staticmethod
-    def travis_config(args):
+    def travis_config(self, args):
         if os.path.exists(os.path.join(os.getcwd(), '.travis.yml')):
-            Commands.__write_file__(os.path.join(os.path.join(os.getcwd(), '.travis.yml')), '''\
+            self.__write_file__(os.path.join(os.path.join(os.getcwd(), '.travis.yml')), '''\
 linux: &linux
    os: linux
    sudo: required
@@ -236,7 +369,7 @@ script:
   - chmod +x .travis/run.sh
   - ./.travis/run.sh
 ''', args)
-            Commands.__write_file__(os.path.join(os.getcwd(), '.travis', 'install.sh'), '''\
+            self.__write_file__(os.path.join(os.getcwd(), '.travis', 'install.sh'), '''\
 #!/bin/bash
 
 set -e
@@ -263,7 +396,7 @@ pip install conan_package_tools
 
 conan user
 ''', args, create_if_absent=True)
-            Commands.__write_file__(os.path.join(os.getcwd(), '.travis', 'run.sh'), '''\
+            self.__write_file__(os.path.join(os.getcwd(), '.travis', 'run.sh'), '''\
 #!/bin/bash
 
 set -e
@@ -279,26 +412,32 @@ fi
 python build.py
 ''', args, create_if_absent=True)
     
-    @staticmethod
-    def git_publish(args):
-        Commands.__call__(['git', 'commit', '--all', '-m', args.git_publish_comment], args)
-        Commands.__check_call__(['git', 'push'], args)
+    def git_publish(self, args):
+        self.__call__(['git', 'commit', '--all', '-m', args.git_publish_comment], args)
+        self.__check_call__(['git', 'push'], args)
     
-    @staticmethod
-    def git_commit(args):
-        Commands.__call__(['git', 'commit', '--all', '-m', args.git_commit_comment], args)
+    def git_commit(self, args):
+        self.__call__(['git', 'commit', '--all', '-m', args.git_commit_comment], args)
     
-    @staticmethod
-    def git_checkout(args):
-        Commands.__call__(['git', 'checkout', args.git_checkout_branch], args)
+    def git_checkout(self, args):
+        self.__call__(['git', 'checkout', args.git_checkout_branch], args)
     
-    @staticmethod
-    def git_merge(args):
-        Commands.__call__(['git', 'merge', args.git_merge_commit], args)
+    def git_merge(self, args):
+        self.__call__(['git', 'merge', args.git_merge_commit], args)
     
-    @staticmethod
-    def git_diff(args):
-        Commands.__call__(['git', 'diff', 'HEAD', args.git_diff_commit, '--'], args)
+    def git_diff(self, args):
+        self.__call__(['git', 'diff', 'HEAD', args.git_diff_commit, '--'], args)
+
+    def gen_levels_pre(self, args):
+        self.gen_levels_info = {}
+
+    def gen_levels(self, args):
+        output = check_output(['conan', 'info', '-bo=ALL'])
+        output = output.split(',')
+        output = [lib for lib in output ]
+
+    def gen_levels_post(self, args):
+        pass
 
 
 if __name__ == "__main__":
@@ -313,6 +452,9 @@ if __name__ == "__main__":
     # command: generate
     # parser.add_argument("++generate-mode", choices=['local', 'required'], default='local')
     parser.add_argument("++generate-version")
+    parser.add_argument("++generate-deps-header", default="deps-header.txt")
+    parser.add_argument("++generate-deps-source", default="deps-source.txt")
+    parser.add_argument("++generate-deps-levels", default="deps-levels.txt")
     # command git_publish
     parser.add_argument("++git-publish-comment")
     # command git_commit
@@ -344,6 +486,10 @@ if __name__ == "__main__":
         for extra in args.extra:
             package_dirs.insert(0, os.path.join(os.getcwd(), extra))
     
+    cc = Commands()
+    for command in args.command:
+        getattr(cc, command + '_pre', lambda a: None)(args)
+    
     failures = []
     for package_dir in package_dirs:
         if package_dir:
@@ -351,7 +497,7 @@ if __name__ == "__main__":
             try:
                 os.chdir(package_dir)
                 for command in args.command:
-                    getattr(Commands, command, lambda a: None)(args)
+                    getattr(cc, command, lambda a: None)(args)
                 print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< " + package_dir + " << SUCCESS")
             except Exception as e:
                 failures.append(package_dir)
@@ -361,4 +507,9 @@ if __name__ == "__main__":
                 print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
     for failure in failures:
         print("FAILED: " + failure)
+    
+    cc = Commands()
+    for command in args.command:
+        getattr(cc, command + '_post', lambda a: None)(args)
+
     exit(len(failures))
