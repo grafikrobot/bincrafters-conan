@@ -432,12 +432,40 @@ python build.py
         self.gen_levels_info = {}
 
     def gen_levels(self, args):
-        output = check_output(['conan', 'info', '-bo=ALL'])
-        output = output.split(',')
-        output = [lib for lib in output ]
+        output = check_output(['conan', 'info', '--package-filter=boost_*', '.'] + args.options)
+        name = None
+        deps = set()
+        state = 'begin'
+        for line in output.splitlines():
+            if state == 'begin':
+                name = self.__re_search__(r'^boost_([^/]+)', line)
+                state = 'info'
+            elif state == 'info' and 'Requires:' in line:
+                state = 'requires'
+            elif state == 'requires':
+                if line.startswith('boost_'):
+                    break
+                else:
+                    dep = self.__re_search__(r'boost_([^/]+)', line)
+                    if dep:
+                        deps.add(dep)
+        self.gen_levels_info[name] = deps
 
     def gen_levels_post(self, args):
-        pass
+        levels = []
+        while len(self.gen_levels_info):
+            level = set()
+            for (k, v) in self.gen_levels_info.iteritems():
+                if len(v) == 0:
+                    level.add(k)
+            if len(level) == 0:
+                break
+            for l in level:
+                del self.gen_levels_info[l]
+                for (k, v) in self.gen_levels_info.iteritems():
+                    v.discard(l)
+            levels.append(level)
+        pprint.pprint(levels)
 
 
 if __name__ == "__main__":
@@ -474,9 +502,10 @@ if __name__ == "__main__":
     package_dirs = filter(None, map(
         lambda d: os.path.dirname(d),
         package_dirs))
-    package_dirs = filter(None, map(
-        lambda d: d if os.path.basename(d) not in ('generator', 'build', 'package_tools') else "",
-        package_dirs))
+    if not args.command[0] in ('gen_levels'):
+        package_dirs = filter(None, map(
+            lambda d: d if os.path.basename(d) not in ('generator', 'build', 'package_tools') else "",
+            package_dirs))
     if args.lib:
         package_dirs = filter(None, map(
             lambda d: d if os.path.basename(d) in args.lib else "",
@@ -508,7 +537,6 @@ if __name__ == "__main__":
     for failure in failures:
         print("FAILED: " + failure)
     
-    cc = Commands()
     for command in args.command:
         getattr(cc, command + '_post', lambda a: None)(args)
 
