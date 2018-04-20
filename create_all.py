@@ -36,7 +36,7 @@ if __name__ == "__main__":
         package_dirs_to_build = filter(None, map(
             lambda d: d if os.path.basename(d) in args.lib else "",
             package_dirs_to_build))
-    package_dirs_to_build = list(package_dirs_to_build)
+    package_dirs_to_build = sorted(list(package_dirs_to_build))
     if not args.clean_each:
         package_dirs_to_build.insert(0, os.path.join(os.getcwd(), 'generator'))
         package_dirs_to_build.insert(0, os.path.join(os.getcwd(), 'package_tools'))

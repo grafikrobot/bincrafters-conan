@@ -467,6 +467,44 @@ python build.py
             levels.append(level)
         pprint.pprint(levels)
 
+    gen_test_files = ['CMakeLists.txt', 'conanfile.py']
+
+    def gen_test_pre(self, args):
+        if args.generate_deps_header:
+            self.generate_deps_header = self.__read_deps__(args.generate_deps_header)
+        self.gen_test_file_format = {}
+        for gen_test_file in self.gen_test_files:
+            gen_test_file_path = os.path.join(os.getcwd(), '.template', 'test_package', gen_test_file)
+            if os.path.exists(gen_test_file_path):
+                with open(gen_test_file_path) as f:
+                    self.gen_test_file_format[gen_test_file] = f.read()
+    
+    def gen_test(self, args):
+        if not os.path.exists(os.path.join(os.getcwd(), 'test_package')):
+            return
+        if not os.path.isfile(os.path.join(os.getcwd(), 'conanfile.py')):
+            return
+        if not self.generate_deps_header:
+            return
+        cf_info = self.__info__(args)
+        boost_lib = cf_info['name'].replace('boost_', '')
+        if not boost_lib in self.generate_deps_header:
+            return
+        format_fields = {'%': '%'}
+        format_fields['link_libraries'] = "\n  " + "\n  ".join([
+            'CONAN_PKG::boost_' + x for x in sorted(self.generate_deps_header[boost_lib] + [boost_lib])])
+        format_fields['boost_deps'] = sorted(self.generate_deps_header[boost_lib] + [boost_lib])
+        for gen_test_file in self.gen_test_files:
+            gen_test_file_path = os.path.join(os.getcwd(), 'test_package', gen_test_file)
+            if gen_test_file in self.gen_test_file_format:
+                gen_test_file_content = self.gen_test_file_format[gen_test_file] % format_fields
+                if args.debug:
+                    print(gen_test_file_path + ":")
+                    print(gen_test_file_content)
+                else:
+                    with open(gen_test_file_path, "w") as f:
+                        f.write(gen_test_file_content)
+
 
 if __name__ == "__main__":
     
@@ -477,12 +515,12 @@ if __name__ == "__main__":
     parser.add_argument('++command', action='append')
     parser.add_argument('++extra', action='append')
     parser.add_argument('options', nargs='*', default=[])
-    # command: generate
-    # parser.add_argument("++generate-mode", choices=['local', 'required'], default='local')
-    parser.add_argument("++generate-version")
     parser.add_argument("++generate-deps-header", default="deps-header.txt")
     parser.add_argument("++generate-deps-source", default="deps-source.txt")
     parser.add_argument("++generate-deps-levels", default="deps-levels.txt")
+    # command: generate
+    # parser.add_argument("++generate-mode", choices=['local', 'required'], default='local')
+    parser.add_argument("++generate-version")
     # command git_publish
     parser.add_argument("++git-publish-comment")
     # command git_commit
@@ -493,6 +531,7 @@ if __name__ == "__main__":
     parser.add_argument("++git-merge-commit")
     # command git_diff
     parser.add_argument("++git-diff-commit")
+    #
     
     args = parser.parse_args()
     if not args.command:
@@ -510,7 +549,7 @@ if __name__ == "__main__":
         package_dirs = filter(None, map(
             lambda d: d if os.path.basename(d) in args.lib else "",
             package_dirs))
-    package_dirs = list(package_dirs)
+    package_dirs = sorted(list(package_dirs))
     if args.extra:
         for extra in args.extra:
             package_dirs.insert(0, os.path.join(os.getcwd(), extra))
