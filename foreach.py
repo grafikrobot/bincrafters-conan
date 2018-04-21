@@ -468,10 +468,17 @@ python build.py
         pprint.pprint(levels)
 
     gen_test_files = ['CMakeLists.txt', 'conanfile.py']
+    gen_test_remove_deps = {
+        'graph': ['graph_parallel'],
+        'property_map': ['mpi']
+        }
 
     def gen_test_pre(self, args):
         if args.generate_deps_header:
             self.generate_deps_header = self.__read_deps__(args.generate_deps_header)
+            for lib in self.gen_test_remove_deps.keys():
+                self.generate_deps_header[lib] = list(
+                    set(self.generate_deps_header[lib]) - set(self.gen_test_remove_deps[lib]))
         self.gen_test_file_format = {}
         for gen_test_file in self.gen_test_files:
             gen_test_file_path = os.path.join(os.getcwd(), '.template', 'test_package', gen_test_file)
