@@ -470,6 +470,8 @@ python build.py
     gen_test_files = ['CMakeLists.txt', 'conanfile.py']
     gen_test_remove_deps = {
         'graph': ['graph_parallel'],
+        'lexical_cast': ['math'],
+        'math': ['lexical_cast'],
         'property_map': ['mpi']
         }
 
