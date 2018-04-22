@@ -468,19 +468,15 @@ python build.py
         pprint.pprint(levels)
 
     gen_test_files = ['CMakeLists.txt', 'conanfile.py']
-    gen_test_remove_deps = {
-        'graph': ['graph_parallel'],
-        'lexical_cast': ['math'],
-        'math': ['lexical_cast'],
-        'property_map': ['mpi']
+    get_test_groups = {
+        'boost_level8group': ["lexical_cast", "math"],
+        'boost_level11group': ["date_time", "pool", "serialization", "spirit", "thread"],
+        'boost_level14group': ["bimap", "disjoint_sets", "graph", "graph_parallel", "mpi", "property_map"]
         }
 
     def gen_test_pre(self, args):
         if args.generate_deps_header:
             self.generate_deps_header = self.__read_deps__(args.generate_deps_header)
-            for lib in self.gen_test_remove_deps.keys():
-                self.generate_deps_header[lib] = list(
-                    set(self.generate_deps_header[lib]) - set(self.gen_test_remove_deps[lib]))
         self.gen_test_file_format = {}
         for gen_test_file in self.gen_test_files:
             gen_test_file_path = os.path.join(os.getcwd(), '.template', 'test_package', gen_test_file)
@@ -499,10 +495,13 @@ python build.py
         boost_lib = cf_info['name'].replace('boost_', '')
         if not boost_lib in self.generate_deps_header:
             return
+        gen_test_deps = set(self.generate_deps_header[boost_lib] + [boost_lib])
+        if cf_info['level_group']:
+            gen_test_deps -= set(self.get_test_groups[cf_info['level_group']])
         format_fields = {'%': '%'}
         format_fields['link_libraries'] = "\n  " + "\n  ".join([
-            'CONAN_PKG::boost_' + x for x in sorted(self.generate_deps_header[boost_lib] + [boost_lib])])
-        format_fields['boost_deps'] = sorted(self.generate_deps_header[boost_lib] + [boost_lib])
+            'CONAN_PKG::boost_' + x for x in sorted(gen_test_deps)])
+        format_fields['boost_deps'] = sorted(gen_test_deps)
         for gen_test_file in self.gen_test_files:
             gen_test_file_path = os.path.join(os.getcwd(), 'test_package', gen_test_file)
             if gen_test_file in self.gen_test_file_format:
