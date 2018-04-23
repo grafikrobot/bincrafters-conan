@@ -159,6 +159,7 @@ class Commands():
             vars = {}
             result_py = []
             parse_state = 'pre'
+            parse_states = set()
             requires_user = set()
             requires_source = set()
             requires_user_current = set()
@@ -172,15 +173,40 @@ class Commands():
             # pprint.pprint(requires_user)
             # print('REQUIRES_SOURCE:')
             # pprint.pprint(requires_source)
+            def source_only_deps_gen():
+                if not cf_info['is_in_cycle_group']:
+                    requires_source_todo = requires_source_current - requires_source
+                    # print("REQUIRES_SOURCE_TODO:")
+                    # pprint.pprint(requires_source_todo)
+                    if len(requires_source_todo) > 0:
+                        result_py.append('''\
+    # TODO: %s
+''' % (', '.join(sorted(requires_source_todo))))
+                    if len(requires_source) > 0:
+                        result_py.append('''\
+    source_only_deps = [
+''')
+                        result_py.append('''\
+        "%s"
+''' % ('''",
+        "'''.join(sorted(requires_source))))
+                        result_py.append('''\
+    ]
+
+''')
+
             for l in cf_py:
                 if parse_state == 'pre':
                     if l and not cf_info['is_cycle_group'] and re.match(r'\s+requires\s+=', l):
                         parse_state = 'requires'
+                        parse_states.add('requires')
                         l = None
                     if l and not cf_info['is_cycle_group'] and re.match(r'\s+source_only_deps\s+=', l):
                         parse_state = 'source_only_deps'
+                        parse_states.add('source_only_deps')
                     if l and '# BEGIN' in l:
                         parse_state = 'template'
+                        parse_states.add('template')
                         l = None
                     if l and args.generate_version:
                         l = re.sub(r'1[.][0-9][0-9][.][0-9]', args.generate_version, l)
@@ -193,6 +219,8 @@ class Commands():
                     if l and l.rstrip() == '':
                         parse_state = 'pre'
                         l = None
+                        if 'source_only_deps' not in parse_states:
+                            source_only_deps_gen()
                         requires_user_keep = set([x for x in requires_user_current if '@' in x])
                         requires_user_current -= requires_user_keep
 
@@ -211,7 +239,7 @@ class Commands():
                         requires_user_keep |= set(['boost_%s/%s@%s' % (x, cf_info['version'], conan_scope) for x in requires_user])
                         # print("REQUIRES_USER_CURRENT:")
                         # pprint.pprint(requires_user_current)
-                        if len(requires_user_todo) > 0:
+                        if len(requires_user_todo) > 0 and not cf_info['level_group']:
                             result_py.append('''\
     # TODO: %s
 ''' % (', '.join(sorted(requires_user_todo))))
@@ -238,24 +266,7 @@ class Commands():
                     if l and l.rstrip() == '':
                         parse_state = 'pre'
                         l = None
-                        requires_source_todo = requires_source_current - requires_source
-                        # print("REQUIRES_SOURCE_TODO:")
-                        # pprint.pprint(requires_source_todo)
-                        if len(requires_source_todo) > 0:
-                            result_py.append('''\
-    # TODO: %s
-''' % (', '.join(sorted(requires_source_todo))))
-                        result_py.append('''\
-    source_only_deps = [
-''')
-                        result_py.append('''\
-        "%s"
-''' % ('''",
-        "'''.join(sorted(requires_source))))
-                        result_py.append('''\
-    ]
-
-''')
+                        source_only_deps_gen()
                     if l:
                         r = re.findall(r'["]([^"]+)["]', l)
                         if r:
@@ -428,6 +439,13 @@ python build.py
     def git_diff(self, args):
         self.__call__(['git', 'diff', 'HEAD', args.git_diff_commit, '--'], args)
 
+    def export_pre(self, args):
+        self.__call__(['conan', 'remove', '--force', 'boost_*'], args)
+        self.__call__(['conan', 'remote', 'add', 'bincrafters', 'https://api.bintray.com/conan/bincrafters/public-conan'], args)
+
+    def export(self, args):
+        self.__call__(['conan', 'export', '.', conan_scope], args)
+
     def gen_levels_pre(self, args):
         self.gen_levels_info = {}
 
@@ -458,8 +476,8 @@ python build.py
             for (k, v) in self.gen_levels_info.iteritems():
                 if len(v) == 0:
                     level.add(k)
-            if len(level) == 0:
-                break
+            # if len(level) == 0:
+            #    break
             for l in level:
                 del self.gen_levels_info[l]
                 for (k, v) in self.gen_levels_info.iteritems():
@@ -498,6 +516,9 @@ python build.py
         gen_test_deps = set(self.generate_deps_header[boost_lib] + [boost_lib])
         if cf_info['level_group']:
             gen_test_deps -= set(self.get_test_groups[cf_info['level_group']])
+            # As soon as we override the "requires" we need to add ourselves
+            # as conan wont do that for us.
+            gen_test_deps.add(boost_lib)
         format_fields = {'%': '%'}
         format_fields['link_libraries'] = "\n  " + "\n  ".join([
             'CONAN_PKG::boost_' + x for x in sorted(gen_test_deps)])
@@ -549,7 +570,7 @@ if __name__ == "__main__":
     package_dirs = filter(None, map(
         lambda d: os.path.dirname(d),
         package_dirs))
-    if not args.command[0] in ('gen_levels'):
+    if not args.command[0] in ('gen_levels', 'export'):
         package_dirs = filter(None, map(
             lambda d: d if os.path.basename(d) not in ('generator', 'build', 'package_tools') else "",
             package_dirs))
