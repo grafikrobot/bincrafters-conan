@@ -169,6 +169,7 @@ class Commands():
             if not cf_info['is_cycle_group'] and args.generate_deps_source:
                 requires_source.update(self.generate_deps_source[cf_info['key']])
                 requires_source.difference_update(requires_user)
+
             # print('REQUIRES_USER:')
             # pprint.pprint(requires_user)
             # print('REQUIRES_SOURCE:')
@@ -523,6 +524,10 @@ python build.py
         format_fields['link_libraries'] = "\n  " + "\n  ".join([
             'CONAN_PKG::boost_' + x for x in sorted(gen_test_deps)])
         format_fields['boost_deps'] = sorted(gen_test_deps)
+        if boost_lib in ['mpi']:
+            format_fields['require_mpi'] = True
+        else:
+            format_fields['require_mpi'] = False
         for gen_test_file in self.gen_test_files:
             gen_test_file_path = os.path.join(os.getcwd(), 'test_package', gen_test_file)
             if gen_test_file in self.gen_test_file_format:
