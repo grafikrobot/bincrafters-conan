@@ -19,7 +19,7 @@ if __name__ == "__main__":
         lambda d: os.path.dirname(d),
         package_dirs_to_export))
     package_dirs_to_export = filter(None, map(
-        lambda d: d if os.path.basename(d) not in ('generator', 'package_tools') else "",
+        lambda d: d if os.path.basename(d) not in ('generator', 'package_tools', 'mpi', 'graph_parallel') else "",
         package_dirs_to_export))
     package_dirs_to_export = list(package_dirs_to_export)
     package_dirs_to_export.insert(0, os.path.join(os.getcwd(), 'generator'))
@@ -30,7 +30,7 @@ if __name__ == "__main__":
         lambda d: os.path.dirname(d),
         package_dirs_to_build))
     package_dirs_to_build = filter(None, map(
-        lambda d: d if os.path.basename(d) not in ('generator', 'package_tools') else "",
+        lambda d: d if os.path.basename(d) not in ('generator', 'package_tools', 'mpi', 'graph_parallel') else "",
         package_dirs_to_build))
     if args.lib:
         package_dirs_to_build = filter(None, map(

@@ -100,6 +100,8 @@ class Commands():
                 '-r', 'bincrafters'
                 ], args)
     
+    ignore_libs = set(['mpi', 'graph_parallel'])
+    
     def __read_deps__(self, deps):
         deps_info = {}
         with open(deps) as f:
@@ -108,7 +110,9 @@ class Commands():
             i = l.split('->')
             lib = i[0].strip().replace('~', '_')
             lib_deps = [x.replace('~', '_') for x in i[1].split()]
-            deps_info[lib] = lib_deps
+            lib_deps = list(set(lib_deps) - self.ignore_libs)
+            if not lib in self.ignore_libs:
+                deps_info[lib] = lib_deps
         return deps_info
     
     def generate_pre(self, args):
@@ -140,11 +144,13 @@ class Commands():
                     lib_deps = [x.replace('~', '_') for x in i[1].split()]
                     for lib_dep in lib_deps:
                         lib_level = int(self.__re_search__(r'[(]([0-9]+)[)]', lib_dep))
-                        if lib_level == level_i:
-                            self.levelgroups[level_i]['lib_short_names'].add(self.__re_search__(r'([^(]+)', lib_dep))
+                        lib_name = self.__re_search__(r'([^(]+)', lib_dep)
+                        if lib_level == level_i and lib_name not in self.ignore_libs:
+                            self.levelgroups[level_i]['lib_short_names'].add(lib_name)
             for (i, lg) in self.levelgroups.iteritems():
                 for l in lg['lib_short_names']:
-                    lg['requires'] |= set(self.generate_deps_header[l])
+                    if l in self.generate_deps_header:
+                        lg['requires'] |= set(self.generate_deps_header[l])
                 lg['requires'] -= lg['lib_short_names']
             pprint.pprint(self.levelgroups)
     
@@ -487,7 +493,7 @@ python build.py
         pprint.pprint(levels)
 
     gen_test_files = ['CMakeLists.txt', 'conanfile.py']
-    get_test_groups = {
+    gen_test_groups = {
         'boost_level8group': ["lexical_cast", "math"],
         'boost_level11group': ["date_time", "pool", "serialization", "spirit", "thread"],
         'boost_level14group': ["bimap", "disjoint_sets", "graph", "graph_parallel", "mpi", "property_map"]
@@ -516,7 +522,7 @@ python build.py
             return
         gen_test_deps = set(self.generate_deps_header[boost_lib] + [boost_lib])
         if cf_info['level_group']:
-            gen_test_deps -= set(self.get_test_groups[cf_info['level_group']])
+            gen_test_deps -= set(self.gen_test_groups[cf_info['level_group']])
             # As soon as we override the "requires" we need to add ourselves
             # as conan wont do that for us.
             gen_test_deps.add(boost_lib)
@@ -594,6 +600,8 @@ if __name__ == "__main__":
     
     failures = []
     for package_dir in package_dirs:
+        if os.path.basename(package_dir) in cc.ignore_libs:
+            continue
         if package_dir:
             print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " + package_dir)
             try:
