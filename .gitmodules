@@ -551,3 +551,7 @@
 	path = hof
 	url = https://github.com/bincrafters/conan-boost_hof.git
 	branch = testing/1.67.0
+[submodule "base"]
+	path = base
+	url = https://github.com/bincrafters/conan-boost_base.git
+	branch = testing/1.67.0
