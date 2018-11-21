@@ -29,8 +29,6 @@ if __name__ == "__main__":
                 "base",
                 "generator",
                 "package_tools",
-                "mpi",
-                "graph_parallel",
             )
             else "",
             package_dirs_to_export,
