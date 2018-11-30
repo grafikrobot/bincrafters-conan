@@ -8,7 +8,7 @@ import argparse
 from time import sleep
 import re
 from types import BooleanType
-from functools import reduce
+import difflib
 
 conan_scope = "bincrafters/testing"
 args = None
@@ -17,13 +17,13 @@ args = None
 class Commands():
     
     def __check_call__(self, command, args):
-        if args.debug:
+        if args.trace:
             print('EXEC: "' + '" "'.join(command) + '"')
         else:
             check_call(command)
     
     def __call__(self, command, args):
-        if args.debug:
+        if args.trace:
             print('EXEC: "' + '" "'.join(command) + '"')
         else:
             call(command)
@@ -39,6 +39,12 @@ class Commands():
         if type(default) == type({}):
             re = '''%s = ([{][^}]+[}])''' % (name)
             return eval(self.__re_search__(re, cf, default=str(default)))
+        if type(default) == type([]):
+            re = '''%s = ([\[][^\]]+[\]])''' % (name)
+            return eval(self.__re_search__(re, cf, default=str(default)))
+        if type(default) == type(tuple()):
+            re = '''%s = ([^\n]+)''' % (name)
+            return eval('tuple(['+self.__re_search__(re, cf, default=str(default))+'])')
         else:
             re = '''%s = ['"]([^'"]+)''' % (name)
             return self.__re_search__(re, cf, default=default)
@@ -49,33 +55,54 @@ class Commands():
             with open(os.path.join(os.getcwd(), 'conanfile.py')) as f:
                 cf = f.read()
             result['name'] = self.__cf_get__('name', cf, default="")
+            result['url'] = self.__cf_get__('url', cf, default="https://github.com/bincrafters/conan-"+result['name'])
+            result['lib_short_names'] = self.__cf_get__('lib_short_names', cf, default=[])
+            result['source_only_deps'] = self.__cf_get__('source_only_deps', cf, default=[])
+            result['header_only_libs'] = self.__cf_get__('header_only_libs', cf, default=[])
+            result['cycle_group'] = self.__cf_get__('cycle_group', cf, default=None)
+            result['options'] = self.__cf_get__('options', cf, default={})
+            result['default_options'] = self.__cf_get__('default_options', cf, default=tuple())
+            result['b2_requires'] = self.__cf_get__('b2_requires', cf, default=[])
+            result['b2_build_requires'] = self.__cf_get__('b2_build_requires', cf, default=[])
+            result['b2_defines'] = self.__cf_get__('b2_defines', cf, default=[])
+            result['b2_options'] = self.__cf_get__('b2_options', cf, default={})
+
             result['key'] = result['name'].replace('boost_', '')
-            result['version'] = self.__cf_get__('version', cf, default="")
-            result['version_flat'] = result['version'].replace('.', '_')
-            result['is_header_only'] = self.__cf_get__('is_header_only', cf, default=True)
-            if type(result['is_header_only']) == type({}):
-                result['is_header_only'] = reduce(lambda x, y: x and y, result['is_header_only'].viewvalues())
-            result['is_cycle_group'] = self.__cf_get__('is_cycle_group', cf, default=False)
-            result['level_group'] = self.__cf_get__('level_group', cf, default=None)
-            result['is_in_cycle_group'] = True if result['level_group'] else False
+            result['is_cycle_group'] = result['key'].startswith('cycle_group')
+            result['is_in_cycle_group'] = True if result['cycle_group'] else False
+            result['is_header_only'] = result['key'] in result['header_only_libs']
         return result
     
     def __write_file__(self, path, content, args, create_if_absent=False):
         if os.path.exists(path) or create_if_absent:
-            if args.debug:
+            if args.trace:
                 print("FILE: " + os.path.basename(path).upper() + "\n" + content)
             else:
                 with open(os.path.join(path), 'w') as f:
                     f.write(content)
 
+    def __lines__(self, lines):
+        return [x.rstrip()+'\n' for x in lines]
+
     def info(self, args):
         print('DIR: ' + os.getcwd())
         cf = self.__info__(args)
         print('NAME: ' + cf['name'])
-        print('VERSION: ' + cf['version'])
-        print('IS_HEADER_ONLY: ' + str(cf['is_header_only']))
+        print('URL: ' + cf['url'])
+        print('LIB_SHORT_NAMES: ' + str(cf['lib_short_names']))
+        print('SOURCE_ONLY_DEPS: ' + str(cf['source_only_deps']))
+        print('HEADER_ONLY_LIBS: ' + str(cf['header_only_libs']))
+        print('CYCLE_GROUP: ' + str(cf['cycle_group']))
+        print('OPTIONS: ' + str(cf['options']))
+        print('DEFAULT_OPTIONS: ' + str(cf['default_options']))
+        print('B2_REQUIRES: ' + str(cf['b2_requires']))
+        print('B2_RBUILD_EQUIRES: ' + str(cf['b2_build_requires']))
+        print('B2_DEFINES: ' + str(cf['b2_defines']))
+        print('B2_OPTIONS: ' + str(cf['b2_options']))
+        print('KEY: ' + str(cf['key']))
         print('IS_CYCLE_GROUP: ' + str(cf['is_cycle_group']))
         print('IS_IN_CYCLE_GROUP: ' + str(cf['is_in_cycle_group']))
+        print('IS_HEADER_ONLY: ' + str(cf['is_header_only']))
         ci = []
         if os.path.isfile(os.path.join(os.getcwd(), '.travis.yml')):
             ci.append('Travis')
@@ -100,7 +127,10 @@ class Commands():
                 '-r', 'bincrafters'
                 ], args)
     
-    ignore_libs = set(['mpi', 'graph_parallel'])
+    ignore_libs = set([
+        "level8group", "level11group", "level14group",
+        # 'mpi', 'graph_parallel',
+    ])
     
     def __read_deps__(self, deps):
         deps_info = {}
@@ -116,6 +146,12 @@ class Commands():
         return deps_info
     
     def generate_pre(self, args):
+        if args.generate_deps_build:
+            self.generate_deps_build = set()
+            with open(args.generate_deps_build) as f:
+                build_txt = f.readlines()
+            for l in build_txt:
+                self.generate_deps_build.add(self.__re_search__('''libs/([^/]+)''', l))
         if args.generate_deps_header:
             self.generate_deps_header = self.__read_deps__(args.generate_deps_header)
         if args.generate_deps_source:
@@ -132,6 +168,7 @@ class Commands():
                     if l.startswith('Level '):
                         level_i = int(l[6:-1])
                         self.levelgroups[level_i] = {
+                            'index': level_i,
                             'lib_short_names': set(),
                             'requires': set() }
                         l = None
@@ -152,8 +189,23 @@ class Commands():
                     if l in self.generate_deps_header:
                         lg['requires'] |= set(self.generate_deps_header[l])
                 lg['requires'] -= lg['lib_short_names']
-            pprint.pprint(self.levelgroups)
-    
+            # pprint.pprint(self.levelgroups)
+            self.cycle_group = {}
+            cycle_group_i = 0
+            cycle_group_k = 'abcd'
+            for level_i in sorted(self.levelgroups.keys()):
+                if len(self.levelgroups[level_i]['lib_short_names']) > 0:
+                    cycle_group_name = 'cycle_group_'+(cycle_group_k[cycle_group_i])
+                    self.cycle_group[cycle_group_name] = self.levelgroups[level_i]
+                    cycle_group_i += 1
+            pprint.pprint(self.cycle_group)
+
+    def __find_lib_cycle_group__(self, key):
+        for ck, cv in self.cycle_group.items():
+            if key in cv['lib_short_names']:
+                return ck
+        return None
+
     def generate(self, args):
         if os.path.isfile(os.path.join(os.getcwd(), 'conanfile.py')):
             cf_info = self.__info__(args)
@@ -162,7 +214,6 @@ class Commands():
                 cf_info['version_flat'] = args.generate_version.replace('.', '_')
             with open(os.path.join(os.getcwd(), 'conanfile.py')) as f:
                 cf_py = f.readlines()
-            vars = {}
             result_py = []
             parse_state = 'pre'
             parse_states = set()
@@ -170,173 +221,127 @@ class Commands():
             requires_source = set()
             requires_user_current = set()
             requires_source_current = set()
-            if not cf_info['is_cycle_group'] and args.generate_deps_header:
-                requires_user.update(self.generate_deps_header[cf_info['key']])
-            if not cf_info['is_cycle_group'] and args.generate_deps_source:
-                requires_source.update(self.generate_deps_source[cf_info['key']])
-                requires_source.difference_update(requires_user)
+            did_name_field = False
+            # Set the grouped libs from the boostdep data..
+            cf_info['is_in_cycle_group'] = False
+            for cg in self.cycle_group.keys():
+                if cf_info['key'] in self.cycle_group[cg]['lib_short_names']:
+                    cf_info['is_in_cycle_group'] = True
+                    cf_info['cycle_group'] = 'boost_'+cg
+                    cf_info['b2_requires'] = [cf_info['cycle_group']]
+                    cf_info['cycle_group_index'] = self.cycle_group[cg]['index']
+                    break
+            # 
+            if not cf_info['is_cycle_group']:
+                cf_info['lib_short_names'] = [cf_info['key']]
+                cf_info['header_only_libs'] = [] if cf_info['key'] in self.generate_deps_build else [cf_info['key']]
+            if not cf_info['is_cycle_group'] and not cf_info['is_in_cycle_group']:
+                if args.generate_deps_header:
+                    requires_user.update(self.generate_deps_header[cf_info['key']])
+                    cf_info['b2_requires'] = ['boost_%s' % (x) for x in list(requires_user)]
+                if args.generate_deps_source:
+                    requires_source.update(self.generate_deps_source[cf_info['key']])
+                    requires_source.difference_update(requires_user)
+                    cf_info['source_only_deps'] = list(requires_source)
+            if cf_info['is_cycle_group']:
+                requires_user.update(self.cycle_group[cf_info['key']]['requires'])
+                cf_info['b2_requires'] = ['boost_%s' % (x) for x in list(requires_user)]
+                cf_info['lib_short_names'] = self.cycle_group[cf_info['key']]['lib_short_names']
+                cf_info['header_only_libs'] = list(set(cf_info['lib_short_names'])-self.generate_deps_build)
 
-            # print('REQUIRES_USER:')
-            # pprint.pprint(requires_user)
-            # print('REQUIRES_SOURCE:')
-            # pprint.pprint(requires_source)
-            def source_only_deps_gen():
-                if not cf_info['is_in_cycle_group']:
-                    requires_source_todo = requires_source_current - requires_source
-                    # print("REQUIRES_SOURCE_TODO:")
-                    # pprint.pprint(requires_source_todo)
-                    if len(requires_source_todo) > 0:
-                        result_py.append('''\
-    # TODO: %s
-''' % (', '.join(sorted(requires_source_todo))))
-                    if len(requires_source) > 0:
-                        result_py.append('''\
-    source_only_deps = [
-''')
-                        result_py.append('''\
-        "%s"
-''' % ('''",
-        "'''.join(sorted(requires_source))))
-                        result_py.append('''\
-    ]
+            if args.trace:
+                print('REQUIRES_USER:')
+                pprint.pprint(requires_user)
+                print('REQUIRES_SOURCE:')
+                pprint.pprint(requires_source)
+            
+            def add_array_var(info_var):
+                if len(cf_info[info_var]) == 1:
+                    result_py.extend(self.__lines__([]
+                        +['''    %s = ["%s"]'''%(info_var,cf_info[info_var][0])]
+                    ))
+                elif len(cf_info[info_var]) > 1:
+                    sorted_var = sorted(cf_info[info_var])
+                    result_py.extend(self.__lines__([]
+                        +['''    %s = ['''%(info_var)]
+                        +['''        "%s",'''%(x) for x in sorted_var[:-1]]
+                        +['''        "%s"'''%(sorted_var[-1])]
+                        +['''    ]''']
+                    ))
 
-''')
+            def add_dict_var(info_var):
+                sorted_keys = sorted(cf_info[info_var].keys())
+                if len(sorted_keys) == 1:
+                    result_py.append('''    %s = {"%s": %s}\n'''%(info_var,sorted_keys[0],cf_info[info_var][sorted_keys[0]]))
+                else:
+                    result_py.append('''    %s = {\n'''%(info_var))
+                    for k in sorted_keys[:-1]:
+                        result_py.append('''        "%s": %s,\n'''%(k,cf_info[info_var][k]))
+                    result_py.append('''        "%s": %s\n'''%(sorted_keys[-1],cf_info[info_var][sorted_keys[-1]]))
+                    result_py.append('''    }\n''')
 
-            for l in cf_py:
-                if parse_state == 'pre':
-                    if l and not cf_info['is_cycle_group'] and re.match(r'\s+requires\s+=', l):
-                        parse_state = 'requires'
-                        parse_states.add('requires')
-                        l = None
-                    if l and not cf_info['is_cycle_group'] and re.match(r'\s+source_only_deps\s+=', l):
-                        parse_state = 'source_only_deps'
-                        parse_states.add('source_only_deps')
-                    if l and '# BEGIN' in l:
-                        parse_state = 'template'
-                        parse_states.add('template')
-                        l = None
+            source_py = self.__lines__(cf_py)
+            while len(cf_py) > 0:
+                l = cf_py.pop(0)
+                # Forward through header to class def.
+                if re.match(r'class\sBoost', l):
+                    # The class definition..
+                    result_py.extend(self.__lines__([
+                        l.rstrip()
+                    ]))
+                    # The class variables..
+                    cycle_group_level = ""
+                    if cf_info['is_cycle_group']:
+                        cycle_group_level = ''' # Level %s'''%(self.cycle_group[cf_info['key']]['index'])
+                    result_py.extend(self.__lines__([
+                        '    name = "%s"'%(cf_info['name'])+cycle_group_level,
+                        '    url = "%s"'%(cf_info['url']),
+                    ]))
+                    add_array_var('lib_short_names')
+                    add_array_var('header_only_libs')
+                    if cf_info['is_in_cycle_group']:
+                        result_py.extend(self.__lines__([
+                            '    cycle_group = "%s"'%(cf_info['cycle_group'])
+                        ]))
+                    if cf_info['options'] and cf_info['default_options']:
+                        add_dict_var('options')
+                        result_py.extend(self.__lines__([
+                            '    default_options = "%s"'%('", "'.join(sorted(cf_info['default_options']))),
+                        ]))
+                    if cf_info['b2_options']:
+                        add_dict_var('b2_options')
+                    add_array_var('b2_defines')
+                    if not cf_info['is_in_cycle_group']:
+                        add_array_var('source_only_deps')
+                    add_array_var('b2_requires')
+                    add_array_var('b2_build_requires')
+                    # Forward past vars and echo functions..
+                    while len(cf_py) > 0:
+                        l = cf_py.pop(0)
+                        prop_or_def = self.__re_search__(r'\s+(@[a-z]|def )', l)
+                        if prop_or_def:
+                            # Eat any trailing empty lines..
+                            while len(cf_py) > 0:
+                                if cf_py[-1].rstrip() != '':
+                                    break
+                                cf_py.pop()
+                            # Copy the rest out..
+                            result_py.extend(self.__lines__(["",l]+cf_py))
+                            cf_py = []
+                            break
+                    break
+                else:
+                    # Headers lines..
                     if l and args.generate_version:
+                        # Version replacements.
                         l = re.sub(r'1[.][0-9][0-9][.][0-9]', args.generate_version, l)
-                    if l and 'url = ' in l:
-                        l = None
-                    if parse_state == 'pre' and l:
-                        result_py.append(l.rstrip() + "\n")
-
-                if parse_state == 'requires':
-                    if l and l.rstrip() == '':
-                        parse_state = 'pre'
-                        l = None
-                        if 'source_only_deps' not in parse_states:
-                            source_only_deps_gen()
-                        requires_user_keep = set([x for x in requires_user_current if '@' in x])
-                        requires_user_current -= requires_user_keep
-
-                        if cf_info['level_group']:
-                            requires_user_level = set([
-                                self.__re_search__(r'boost_(.*)', cf_info['level_group']),
-                                'package_tools'])
-                            requires_user_todo = requires_user - requires_user_level
-                            requires_user = requires_user_level
-                        else:
-                            requires_user.add('package_tools')
-                            requires_user_todo = requires_user_current - requires_user
-                        # if cf_info['level_group']:
-                        #    requires_user -= requires_user_current
-
-                        requires_user_keep |= set(['boost_%s/%s@%s' % (x, cf_info['version'], conan_scope) for x in requires_user])
-                        # print("REQUIRES_USER_CURRENT:")
-                        # pprint.pprint(requires_user_current)
-                        if len(requires_user_todo) > 0 and not cf_info['level_group']:
-                            result_py.append('''\
-    # TODO: %s
-''' % (', '.join(sorted(requires_user_todo))))
-                        result_py.append('''\
-    requires = (
-''')
-                        result_py.append('''\
-        "%s"
-''' % ('''",
-        "'''.join(sorted(requires_user_keep))))
-                        result_py.append('''\
-    )
-
-''')
-                    if l:
-                        r = self.__re_search__(r'\s+["]([^"]+)', l)
-                        b = self.__re_search__(r'\s+["]boost_([^/]+)', l)
-                        if b:
-                            requires_user_current.add(b)
-                        elif r:
-                            requires_user_current.add(r)
-
-                if parse_state == 'source_only_deps':
-                    if l and l.rstrip() == '':
-                        parse_state = 'pre'
-                        l = None
-                        source_only_deps_gen()
-                    if l:
-                        r = re.findall(r'["]([^"]+)["]', l)
-                        if r:
-                            requires_source_current.update(r)
-
-                if parse_state == 'template':
-                    if l and '# END' in l:
-                        parse_state = 'post'
-                        l = None
-                        result_py.append('''\
-    # BEGIN
-
-    url = "https://github.com/bincrafters/conan-{name}"
-    description = "Please visit http://www.boost.org/doc/libs/{version_flat}"
-    license = "BSL-1.0"
-    short_paths = True
-'''.format(**cf_info))
-                        if not cf_info['is_header_only']:
-                            result_py.append('''\
-    generators = "boost"
-    settings = "os", "arch", "compiler", "build_type"
-'''.format(**cf_info))
-                        result_py.append('''\
-    build_requires = "boost_generator/{version}@bincrafters/testing"
-
-    def package_id(self):
-        getattr(self, "package_id_additional", lambda:None)()
-
-    def source(self):
-        with tools.pythonpath(self):
-            import boost_package_tools  # pylint: disable=F0401
-            boost_package_tools.source(self)
-        getattr(self, "source_additional", lambda:None)()
-
-    def build(self):
-        with tools.pythonpath(self):
-            import boost_package_tools  # pylint: disable=F0401
-            boost_package_tools.build(self)
-        getattr(self, "build_additional", lambda:None)()
-
-    def package(self):
-        with tools.pythonpath(self):
-            import boost_package_tools  # pylint: disable=F0401
-            boost_package_tools.package(self)
-        getattr(self, "package_additional", lambda:None)()
-
-    def package_info(self):
-        with tools.pythonpath(self):
-            import boost_package_tools  # pylint: disable=F0401
-            boost_package_tools.package_info(self)
-        getattr(self, "package_info_additional", lambda:None)()
-
-    # END
-'''.format(**cf_info))
-
-                if parse_state == 'post':
-                    if l and args.generate_version:
-                        l = re.sub(r'1[.][0-9][0-9][.][0-9]', args.generate_version, l)
-                    if l:
-                        result_py.append(l.rstrip() + "\n")
+                    result_py.append(l.rstrip() + "\n")
 
             if args.debug:
-                print("".join(result_py))
+                # if args.trace:
+                #     pprint.pprint(result_py)
+                # print("".join(result_py))
+                print("".join(difflib.unified_diff(source_py, result_py, fromfile=cf_info['key']+"/before", tofile=cf_info['key']+"/after")))
             else:
                 with open(os.path.join(package_dir, 'conanfile.py'), 'w') as f:
                     conanfile_py = f.write("".join(result_py))
@@ -457,13 +462,19 @@ python build.py
         self.gen_levels_info = {}
 
     def gen_levels(self, args):
-        output = check_output(['conan', 'info', '--package-filter=boost_*', '.'] + args.options)
+        cf_info = self.__info__(args)
+        output = check_output([
+            'conan', 'info',
+            '--package-filter=boost_*',
+            '%s/%s@%s'%(cf_info['name'],args.version,conan_scope)]
+            + args.options)
         name = None
         deps = set()
         state = 'begin'
         for line in output.splitlines():
-            if state == 'begin':
-                name = self.__re_search__(r'^boost_([^/]+)', line)
+            package = self.__re_search__(r'^\s*boost_([^/]+)', line)
+            if state == 'begin' and package == cf_info['key']:
+                name = package
                 state = 'info'
             elif state == 'info' and 'Requires:' in line:
                 state = 'requires'
@@ -471,14 +482,21 @@ python build.py
                 if line.startswith('boost_'):
                     break
                 else:
-                    dep = self.__re_search__(r'boost_([^/]+)', line)
-                    if dep:
-                        deps.add(dep)
+                    if package:
+                        deps.add(package)
+        if args.debug:
+            print("GEN_LEVELS_INFO[%s]:"%(name))
+            pprint.pprint(deps)
         self.gen_levels_info[name] = deps
 
     def gen_levels_post(self, args):
+        if args.debug:
+            print("GEN_LEVELS_INFO:")
+            pprint.pprint(self.gen_levels_info)
         levels = []
-        while len(self.gen_levels_info):
+        while 0 < len(self.gen_levels_info) and len(levels) < 200:
+            if args.trace:
+                print("GEN_LEVELS_POST.. level #%s:"%(len(levels)))
             level = set()
             for (k, v) in self.gen_levels_info.iteritems():
                 if len(v) == 0:
@@ -489,6 +507,8 @@ python build.py
                 del self.gen_levels_info[l]
                 for (k, v) in self.gen_levels_info.iteritems():
                     v.discard(l)
+            if args.trace:
+                pprint.pprint(level)
             levels.append(level)
         pprint.pprint(levels)
 
@@ -552,12 +572,15 @@ if __name__ == "__main__":
     # common args
     parser.add_argument('++lib', action='append')
     parser.add_argument('++debug', action='store_true')
+    parser.add_argument('++trace', action='store_true')
     parser.add_argument('++command', action='append')
     parser.add_argument('++extra', action='append')
+    parser.add_argument('++version')
     parser.add_argument('options', nargs='*', default=[])
     parser.add_argument("++generate-deps-header", default="deps-header.txt")
     parser.add_argument("++generate-deps-source", default="deps-source.txt")
     parser.add_argument("++generate-deps-levels", default="deps-levels.txt")
+    parser.add_argument("++generate-deps-build", default="deps-build.txt")
     # command: generate
     # parser.add_argument("++generate-mode", choices=['local', 'required'], default='local')
     parser.add_argument("++generate-version")
@@ -577,13 +600,18 @@ if __name__ == "__main__":
     if not args.command:
         args.command = ['info']
     
+    #
+    core_libs = set([
+        'base', 'build', 'generator', 'package_tools'
+    ])
+    
     package_dirs = glob.glob(os.path.join(os.getcwd(), '*', 'conanfile.py'))
     package_dirs = filter(None, map(
         lambda d: os.path.dirname(d),
         package_dirs))
-    if not args.command[0] in ('gen_levels', 'export'):
+    if not args.command[0] in ('gen_levels'):
         package_dirs = filter(None, map(
-            lambda d: d if os.path.basename(d) not in ('generator', 'build', 'package_tools') else "",
+            lambda d: d if os.path.basename(d) not in core_libs else "",
             package_dirs))
     if args.lib:
         package_dirs = filter(None, map(
@@ -593,6 +621,8 @@ if __name__ == "__main__":
     if args.extra:
         for extra in args.extra:
             package_dirs.insert(0, os.path.join(os.getcwd(), extra))
+    if args.command[0] in ('export'):
+        package_dirs = [os.path.join(os.getcwd(), x) for x in core_libs]+package_dirs
     
     cc = Commands()
     for command in args.command:
