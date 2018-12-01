@@ -467,26 +467,16 @@ python build.py
             '--package-filter=boost_*',
             '%s/%s@%s'%(cf_info['name'],args.version,conan_scope)]
             + args.options)
-        name = None
         deps = set()
         state = 'begin'
         for line in output.splitlines():
-            package = self.__re_search__(r'^\s*boost_([^/]+)', line)
-            if state == 'begin' and package == cf_info['key']:
-                name = package
-                state = 'info'
-            elif state == 'info' and 'Requires:' in line:
-                state = 'requires'
-            elif state == 'requires':
-                if line.startswith('boost_'):
-                    break
-                else:
-                    if package:
-                        deps.add(package)
+            package = self.__re_search__(r'^\s*boost[-_]([^/]+)', line)
+            if package and package != cf_info['key']:
+                deps.add(package)
         if args.debug:
-            print("GEN_LEVELS_INFO[%s]:"%(name))
+            print("GEN_LEVELS_INFO[%s]:"%(cf_info['key']))
             pprint.pprint(deps)
-        self.gen_levels_info[name] = deps
+        self.gen_levels_info[cf_info['key']] = deps
 
     def gen_levels_post(self, args):
         if args.debug:
