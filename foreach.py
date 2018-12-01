@@ -128,7 +128,6 @@ class Commands():
                 ], args)
     
     ignore_libs = set([
-        "level8group", "level11group", "level14group",
         # 'mpi', 'graph_parallel',
     ])
     
@@ -514,9 +513,6 @@ python build.py
 
     gen_test_files = ['CMakeLists.txt', 'conanfile.py']
     gen_test_groups = {
-        'boost_level8group': ["lexical_cast", "math"],
-        'boost_level11group': ["date_time", "pool", "serialization", "spirit", "thread"],
-        'boost_level14group': ["bimap", "disjoint_sets", "graph", "graph_parallel", "mpi", "property_map"]
         }
 
     def gen_test_pre(self, args):

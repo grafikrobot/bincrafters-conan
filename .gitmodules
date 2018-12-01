@@ -181,15 +181,6 @@
 [submodule "lambda"]
 	path = lambda
 	url = https://github.com/bincrafters/conan-boost_lambda.git
-[submodule "level11group"]
-	path = level11group
-	url = https://github.com/bincrafters/conan-boost_level11group.git
-[submodule "level14group"]
-	path = level14group
-	url = https://github.com/bincrafters/conan-boost_level14group.git
-[submodule "level8group"]
-	path = level8group
-	url = https://github.com/bincrafters/conan-boost_level8group.git
 [submodule "lexical_cast"]
 	path = lexical_cast
 	url = https://github.com/bincrafters/conan-boost_lexical_cast.git
