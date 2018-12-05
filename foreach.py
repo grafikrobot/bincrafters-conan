@@ -128,7 +128,7 @@ class Commands():
                 ], args)
     
     ignore_libs = set([
-        # 'mpi', 'graph_parallel',
+        'mpi', 'graph_parallel', 'numeric_odeint'
     ])
     
     def __read_deps__(self, deps):
@@ -464,15 +464,14 @@ python build.py
         cf_info = self.__info__(args)
         output = check_output([
             'conan', 'info',
-            '--package-filter=boost_*',
-            '%s/%s@%s'%(cf_info['name'],args.version,conan_scope)]
+            '%s/%s@%s'%(cf_info['name'],args.version,conan_scope),
+            '--build-order=ALL',
+            ]
             + args.options)
-        deps = set()
-        state = 'begin'
-        for line in output.splitlines():
-            package = self.__re_search__(r'^\s*boost[-_]([^/]+)', line)
-            if package and package != cf_info['key']:
-                deps.add(package)
+        deps = set(re.findall(r'boost[-_]([^/]+)',output))
+        deps.remove(cf_info['key'])
+        if not cf_info['key'] in ['base', 'build', 'generator', 'package_tools']:
+            deps.add('base')
         if args.debug:
             print("GEN_LEVELS_INFO[%s]:"%(cf_info['key']))
             pprint.pprint(deps)
