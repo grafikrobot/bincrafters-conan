@@ -28,7 +28,6 @@ if __name__ == "__main__":
             not in (
                 "base",
                 "generator",
-                "package_tools",
             )
             else "",
             package_dirs_to_export,
@@ -37,7 +36,6 @@ if __name__ == "__main__":
     package_dirs_to_export = list(package_dirs_to_export)
     package_dirs_to_export.insert(0, os.path.join(os.getcwd(), "base"))
     package_dirs_to_export.insert(0, os.path.join(os.getcwd(), "generator"))
-    package_dirs_to_export.insert(0, os.path.join(os.getcwd(), "package_tools"))
 
     package_dirs_to_build = glob.glob(
         os.path.join(os.getcwd(), "*", "conanfile.py")
@@ -53,10 +51,8 @@ if __name__ == "__main__":
             not in (
                 "base",
                 "generator",
-                "package_tools",
                 # "mpi",
                 # "graph_parallel",
-                "level8group", "level11group", "level14group",
             )
             else "",
             package_dirs_to_build,
@@ -74,9 +70,6 @@ if __name__ == "__main__":
     if not args.clean_each:
         package_dirs_to_build.insert(0, os.path.join(os.getcwd(), "base"))
         package_dirs_to_build.insert(0, os.path.join(os.getcwd(), "generator"))
-        package_dirs_to_build.insert(
-            0, os.path.join(os.getcwd(), "package_tools")
-        )
 
     call(["conan", "remove", "--force", "boost_*"])
     call(

@@ -421,3 +421,9 @@
 [submodule "cycle_group_d"]
 	path = cycle_group_d
 	url = https://github.com/bincrafters/conan-boost_cycle_group_d.git
+[submodule "parameter_pyton"]
+	path = parameter_pyton
+	url = https://github.com/bincrafters/conan-boost_parameter_python.git
+[submodule "safe_numerics"]
+	path = safe_numerics
+	url = https://github.com/bincrafters/conan-boost_safe_numerics.git
