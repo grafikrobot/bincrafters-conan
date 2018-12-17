@@ -152,7 +152,11 @@ class Commands():
             return self.__ignore_libs__
 
     header_only_libs = set([
-        'function_types', 'system'
+        # Has non-lib build files in the build dir.
+        'function_types',
+        # Can't be used as header only as the users still refer to the built
+        # lib.
+        # 'system'
     ])
 
     short_names = {
