@@ -136,9 +136,6 @@
 [submodule "fusion"]
 	path = fusion
 	url = https://github.com/bincrafters/conan-boost_fusion.git
-[submodule "generator"]
-	path = generator
-	url = https://github.com/bincrafters/conan-boost_generator.git
 [submodule "geometry"]
 	path = geometry
 	url = https://github.com/bincrafters/conan-boost_geometry.git
@@ -403,9 +400,6 @@
 [submodule "hof"]
 	path = hof
 	url = https://github.com/bincrafters/conan-boost_hof.git
-[submodule "base"]
-	path = base
-	url = https://github.com/bincrafters/conan-boost_base.git
 [submodule "yap"]
 	path = yap
 	url = https://github.com/bincrafters/conan-boost_yap.git
